@@ -1,42 +1,89 @@
-import React from 'react';
-import { FolderOpen } from 'lucide-react';
-import FileCard from '../components/FileCard'; // Import FileCard component
+// src/pages/publishedDocumentspage.js
+import React, { useState, useMemo } from 'react';
+import { LayoutDashboard, FileText, FileSpreadsheet } from 'lucide-react';
+import FileCard from '../components/FileCard';
+import SearchAndSort from '../components/SearchAndSort';
 
-function PublishedDocumentsPage({ files, setCurrentPage, onView }) {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 p-4 font-sans antialiased">
-      <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-2xl p-6 border-t-4 border-purple-500">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-semibold text-gray-700 flex items-center gap-3">
-            <FolderOpen className="w-8 h-8 text-purple-500" /> Published Documents (Viewable)
-          </h2>
-          <button
-            onClick={() => setCurrentPage('dashboard')}
-            className="bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors shadow-sm"
-          >
-            Back to Dashboard
-          </button>
-        </div>
-        <p className="text-gray-600 mb-6">
-          This section contains viewable XLSX and PDF files.
-        </p>
-        {files.length === 0 ? (
-          <p className="text-gray-500 text-lg text-center py-8">No published documents to display.</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {files.map(file => (
-              <FileCard
-                key={file.id}
-                file={file}
-                folderType="Published Documents"
-                onView={onView}
-              />
+const PublishedDocumentsPage = ({ files = [], setCurrentPage, onView, onSent }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortCriteria, setSortCriteria] = useState('newest');
+
+  const filteredAndSortedFiles = useMemo(() => {
+    return files
+      .filter(file => file.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      .sort((a, b) => {
+        switch (sortCriteria) {
+          case 'oldest': return new Date(a.createdDateTime) - new Date(b.createdDateTime);
+          case 'name-asc': return a.name.localeCompare(b.name);
+          case 'name-desc': return b.name.localeCompare(a.name);
+          case 'newest':
+          default:
+            return new Date(b.createdDateTime) - new Date(a.createdDateTime);
+        }
+      });
+  }, [files, searchTerm, sortCriteria]);
+
+  // Split the files into two groups
+  const pdfFiles = filteredAndSortedFiles.filter(file => file.type === 'pdf');
+  const xlsxFiles = filteredAndSortedFiles.filter(file => file.type === 'xlsx');
+
+  const renderFileList = (list, title, icon) => (
+    <div className="flex-1">
+      <div className="flex items-center mb-4">
+        {icon}
+        <h2 className="text-2xl font-bold text-text-primary-light dark:text-text-primary-dark ml-2">{title}</h2>
+      </div>
+      {list.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-4">
+            {list.map(file => (
+                <FileCard
+                    key={file.id}
+                    file={file}
+                    // Use onFileAction to handle clicks consistently
+                    onFileAction={(action, file) => {
+                        if(action === 'view') onView(file);
+                        if(action === 'sent') onSent(file.id);
+                    }}
+                    pageType="publishedDocuments"
+                />
             ))}
-          </div>
-        )}
+        </div>
+      ) : (
+        <div className="text-center p-10 bg-light-bg-card/50 dark:bg-dark-bg-card/50 rounded-xl shadow-inner h-full flex items-center justify-center">
+             <p className="text-text-secondary-light dark:text-text-secondary-dark">No {title} found.</p>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-light-bg-canvas dark:bg-dark-bg-card text-text-primary-light dark:text-text-primary-dark p-8">
+      <header className="flex justify-between items-center mb-10 pb-4 border-b border-border-subtle-light dark:border-border-subtle-dark">
+        <h1 className="text-4xl font-bold text-brand-orange-light dark:text-brand-orange-dark">Raised in QuickBooks</h1>
+        <button
+          onClick={() => setCurrentPage('dashboard')}
+          className="px-6 py-2 bg-ui-blue-light/10 text-ui-blue-light rounded-lg shadow-md hover:bg-ui-blue-light/20 transition-colors duration-300 flex items-center dark:bg-ui-blue-dark/10 dark:text-ui-blue-dark dark:hover:bg-ui-blue-dark/20"
+          aria-label="Back to Dashboard"
+        >
+          <LayoutDashboard className="inline-block mr-2" size={18} />
+          Back to Dashboard
+        </button>
+      </header>
+      
+      <SearchAndSort
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        sortCriteria={sortCriteria}
+        setSortCriteria={setSortCriteria}
+      />
+
+      <div className="flex flex-col lg:flex-row gap-8 mt-6">
+        {renderFileList(pdfFiles, "PDF Invoices", <FileText size={28} className="text-brand-orange-light dark:text-brand-orange-dark" />)}
+        <div className="border-b lg:border-l border-border-subtle-light dark:border-border-subtle-dark"></div>
+        {renderFileList(xlsxFiles, "Excel Invoices", <FileSpreadsheet size={28} className="text-brand-orange-light dark:text-brand-orange-dark" />)}
       </div>
     </div>
   );
-}
+};
 
 export default PublishedDocumentsPage;

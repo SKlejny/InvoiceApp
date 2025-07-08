@@ -1,46 +1,85 @@
+// src/components/FileCard.js
 import React from 'react';
-import { FileText, FileSpreadsheet, Eye, Pencil, CheckCircle } from 'lucide-react';
+import { FileText, FileSpreadsheet, Eye, CheckCircle, Send } from 'lucide-react';
+import { FOLDER_NAMES } from '../utils/constants';
 
-function FileCard({ file, folderType, onEdit, onApprove, onView }) {
-  return (
-    <div className="bg-white rounded-lg shadow-md p-4 flex flex-col items-center justify-between text-center transition-transform hover:scale-105 duration-200 ease-in-out border border-gray-200">
-      {file.type === 'pdf' ? (
-        <FileText className="w-12 h-12 text-red-500 mb-2" />
-      ) : (
-        <FileSpreadsheet className="w-12 h-12 text-green-600 mb-2" />
-      )}
-      <p className="font-semibold text-gray-800 text-sm break-all w-full">{file.name}</p>
-      <div className="mt-4 flex flex-wrap justify-center gap-2">
-        {folderType === 'Incoming Invoices' && (
+const ActionButton = ({ onClick, icon, text, colorClass }) => (
+  <button
+    onClick={onClick}
+    className={`flex items-center justify-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 w-full ${colorClass}`}
+  >
+    {icon}
+    {text}
+  </button>
+);
+
+const FileCard = ({ file, onFileAction, pageType }) => {
+  const FileIcon = file.type === 'xlsx' ? FileSpreadsheet : FileText;
+
+  const renderActionButtons = () => {
+    switch (pageType) {
+      case FOLDER_NAMES.INCOMING_INVOICES:
+        return (
           <>
-            <button
-              onClick={() => onEdit(file, 'Incoming Invoices')}
-              className="bg-blue-500 text-white p-2 rounded-full shadow-md hover:bg-blue-600 transition-colors tooltip group relative"
-            >
-              <Pencil className="w-4 h-4" />
-              <span className="tooltip-text absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block px-2 py-1 text-xs text-white bg-gray-700 rounded-md whitespace-nowrap">Edit</span>
-            </button>
-            <button
-              onClick={() => onApprove(file.id)}
-              className="bg-green-500 text-white p-2 rounded-full shadow-md hover:bg-green-600 transition-colors tooltip group relative"
-            >
-              <CheckCircle className="w-4 h-4" />
-              <span className="tooltip-text absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block px-2 py-1 text-xs text-white bg-gray-700 rounded-md whitespace-nowrap">Approve</span>
-            </button>
+            <ActionButton
+              onClick={() => onFileAction('view', file)}
+              icon={<Eye size={16} className="mr-1.5" />}
+              text={file.type === 'xlsx' ? 'View/Edit' : 'View'}
+              colorClass="bg-brand-orange-light/10 text-brand-orange-light hover:bg-brand-orange-light/20"
+            />
+            <ActionButton
+              onClick={() => onFileAction('approve', file)}
+              icon={<CheckCircle size={16} className="mr-1.5" />}
+              text="Approve"
+              colorClass="bg-status-approved-light/10 text-status-approved-light hover:bg-status-approved-light/20 dark:bg-status-approved-dark/10 dark:text-status-approved-dark dark:hover:bg-status-approved-dark/20"
+            />
           </>
-        )}
-        {(folderType === 'Published Documents' || folderType === 'Incoming Invoices') && (
-          <button
-            onClick={() => onView(file, folderType)}
-            className="bg-purple-500 text-white p-2 rounded-full shadow-md hover:bg-purple-600 transition-colors tooltip group relative"
-          >
-            <Eye className="w-4 h-4" />
-            <span className="tooltip-text absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block px-2 py-1 text-xs text-white bg-gray-700 rounded-md whitespace-nowrap">View</span>
-          </button>
-        )}
+        );
+      case FOLDER_NAMES.PUBLISHED_DOCUMENTS:
+        return (
+            <>
+                <ActionButton
+                    onClick={() => onFileAction('view', file)}
+                    icon={<Eye size={16} className="mr-1.5" />}
+                    text="View"
+                    colorClass="bg-ui-blue-light/10 text-ui-blue-light hover:bg-ui-blue-light/20 dark:bg-ui-blue-dark/10 dark:text-ui-blue-dark dark:hover:bg-ui-blue-dark/20"
+                />
+                <ActionButton
+                    onClick={() => onFileAction('sent', file)}
+                    icon={<Send size={16} className="mr-1.5" />}
+                    text="Mark Sent"
+                    colorClass="bg-status-pending-light/10 text-status-pending-light hover:bg-status-pending-light/20 dark:bg-status-pending-dark/10 dark:text-status-pending-dark dark:hover:bg-status-pending-dark/20"
+                />
+            </>
+        );
+      default:
+        return (
+          <ActionButton
+            onClick={() => onFileAction('view', file)}
+            icon={<Eye size={16} className="mr-1.5" />}
+            text={file.type === 'xlsx' ? 'View/Edit' : 'View'}
+            colorClass="bg-ui-blue-light/10 text-ui-blue-light hover:bg-ui-blue-light/20 dark:bg-ui-blue-dark/10 dark:text-ui-blue-dark dark:hover:bg-ui-blue-dark/20"
+          />
+        );
+    }
+  };
+
+  return (
+    <div className="bg-light-bg-card dark:bg-dark-bg-card rounded-xl shadow-lg hover:shadow-xl p-4 flex flex-col transition-all duration-200 border border-border-subtle-light/50 dark:border-border-subtle-dark/50">
+      <div className="flex-grow flex flex-col items-center text-center mb-4">
+        <FileIcon className="w-16 h-16 mb-3 text-brand-orange-light dark:text-brand-orange-dark" />
+        <h3 className="text-base font-semibold text-text-primary-light dark:text-text-primary-dark w-full h-12 overflow-hidden text-ellipsis break-words line-clamp-2">
+          {file.name}
+        </h3>
+        <p className="text-xs text-text-secondary-light dark:text-text-secondary-dark mt-1">
+          {file.type.toUpperCase()}
+        </p>
+      </div>
+      <div className="flex flex-col sm:flex-row justify-center gap-2 w-full">
+        {renderActionButtons()}
       </div>
     </div>
   );
-}
+};
 
 export default FileCard;

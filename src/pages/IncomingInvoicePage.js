@@ -1,44 +1,175 @@
-import React from 'react';
-import { FolderOpen } from 'lucide-react';
-import FileCard from '../components/FileCard'; // Import FileCard component
+// src/pages/IncomingInvoicePage.js
 
-function IncomingInvoicesPage({ files, setCurrentPage, onEdit, onApprove, onView }) {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 p-4 font-sans antialiased">
-      <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-2xl p-6 border-t-4 border-blue-500">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-semibold text-gray-700 flex items-center gap-3">
-            <FolderOpen className="w-8 h-8 text-blue-500" /> Current Invoices (To Approve)
-          </h2>
-          <button
-            onClick={() => setCurrentPage('dashboard')}
-            className="bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors shadow-sm"
-          >
-            Back to Dashboard
-          </button>
-        </div>
-        <p className="text-gray-600 mb-6">
-          Here you can view, edit the name and content of XLSX files, and approve them to move to the "Approved Invoices" folder.
-        </p>
-        {files.length === 0 ? (
-          <p className="text-gray-500 text-lg text-center py-8">No incoming invoices to display.</p>
+import React, { useState, useMemo } from 'react'; // Import useState and useMemo
+import { LayoutDashboard, Eye, Pencil, CheckCircle, FileText, FileSpreadsheet, Search, ListFilter } from 'lucide-react'; // Import new icons
+
+const IncomingInvoicesPage = ({ files = [], setCurrentPage, onEdit, onApprove, onView }) => {
+  // NEW: State for search and sort
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortCriteria, setSortCriteria] = useState('newest'); // 'newest', 'oldest', 'name-asc', 'name-desc'
+
+  // NEW: Filter and sort files based on state
+  const filteredAndSortedFiles = useMemo(() => {
+    let currentFiles = [...files]; // Create a mutable copy
+
+    // 1. Filtering
+    if (searchTerm) {
+      const lowerCaseSearchTerm = searchTerm.toLowerCase();
+      currentFiles = currentFiles.filter(
+        (file) =>
+          file.name.toLowerCase().includes(lowerCaseSearchTerm) ||
+          file.type.toLowerCase().includes(lowerCaseSearchTerm)
+      );
+    }
+
+    // 2. Sorting
+    currentFiles.sort((a, b) => {
+      switch (sortCriteria) {
+        case 'oldest':
+          // Assuming 'id' can be used as a proxy for creation order if no 'createdDate' is available
+          return a.id.localeCompare(b.id);
+        case 'name-asc':
+          return a.name.localeCompare(b.name);
+        case 'name-desc':
+          return b.name.localeCompare(a.name);
+        case 'newest':
+        default:
+          return b.id.localeCompare(a.id); // Default to newest based on ID
+      }
+    });
+
+    return currentFiles;
+  }, [files, searchTerm, sortCriteria]);
+
+  // FileCard component definition (nested within IncomingInvoicesPage as per original structure)
+  const FileCard = ({ file, onEdit, onApprove, onView }) => (
+    <div 
+      // File Card Styling: Glassmorphism effect
+      className="bg-light-bg-card bg-opacity-70 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl 
+                 p-6 flex flex-col items-center text-center transition-transform hover:scale-105 duration-200 
+                 h-full justify-between border border-white/30 
+                 dark:bg-dark-bg-card dark:bg-opacity-60 dark:border-gray-300/10 dark:text-text-primary-dark"
+    >
+      <div>
+        {/* File Type Icons: brand-orange for consistent document representation */}
+        {file.type === 'pdf' ? (
+          <FileText className="w-16 h-16 text-brand-orange-light mb-3 dark:text-brand-orange-dark" />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {files.map(file => (
-              <FileCard
-                key={file.id}
-                file={file}
-                folderType="Incoming Invoices"
-                onEdit={onEdit}
-                onApprove={onApprove}
-                onView={onView}
-              />
-            ))}
-          </div>
+          <FileSpreadsheet className="w-16 h-16 text-brand-orange-light mb-3 dark:text-brand-orange-dark" />
         )}
+        {/* File Name: Uses primary text colors */}
+        <h3 className="text-lg font-semibold text-text-primary-light mb-2 break-words w-full h-12 overflow-hidden text-ellipsis line-clamp-2 dark:text-text-primary-dark">
+          {file.name}
+        </h3>
+        {/* File Type Description: Uses brand orange for highlight */}
+        <p className="text-sm text-brand-orange-light mb-4 dark:text-brand-orange-dark">{file.type.toUpperCase()} File</p>
+      </div>
+      <div className="flex flex-wrap justify-center gap-3 w-full min-h-[48px]">
+        {file.type === 'xlsx' ? (
+          <button
+            onClick={() => onView(file)} 
+            className="flex items-center px-4 py-2 bg-brand-orange-light/10 text-brand-orange-light rounded-lg 
+                       hover:bg-brand-orange-light/20 transition-colors text-sm font-medium 
+                       dark:bg-brand-orange-dark/10 dark:text-brand-orange-dark dark:hover:bg-brand-orange-dark/20"
+            aria-label={`View or edit ${file.name}`}
+          >
+            <Pencil size={16} className="mr-1" /> View/Edit
+          </button>
+        ) : (
+          <button
+            onClick={() => onView(file)}
+            className="flex items-center px-4 py-2 bg-brand-orange-light/10 text-brand-orange-light rounded-lg 
+                       hover:bg-brand-orange-light/20 transition-colors text-sm font-medium 
+                       dark:bg-brand-orange-dark/10 dark:text-brand-orange-dark dark:hover:bg-brand-orange-dark/20"
+            aria-label={`View ${file.name}`}
+          >
+            <Eye size={16} className="mr-1" /> View
+          </button>
+        )}
+        <button
+          onClick={() => onApprove(file.id)}
+          className="flex items-center px-4 py-2 bg-status-approved-light/10 text-status-approved-light rounded-lg 
+                     hover:bg-status-approved-light/20 transition-colors text-sm font-medium 
+                     dark:bg-status-approved-dark/10 dark:text-status-approved-dark dark:hover:bg-status-approved-dark/20"
+          aria-label={`Approve ${file.name}`}
+        >
+          <CheckCircle size={16} className="mr-1" /> Approve
+        </button>
       </div>
     </div>
   );
-}
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-light-bg-canvas to-blue-50 p-8 
+                    dark:from-dark-bg-canvas-start dark:via-dark-bg-canvas-via dark:to-dark-bg-canvas-end">
+      <header className="flex justify-between items-center mb-10 pb-4 
+                         border-b border-border-subtle-light dark:border-border-subtle-dark">
+        <h1 className="text-4xl font-bold text-brand-orange-light dark:text-brand-orange-dark">To Be Approved</h1>
+        <button
+          onClick={() => setCurrentPage('dashboard')}
+          className="px-6 py-2 bg-ui-blue-light/10 text-ui-blue-light rounded-lg shadow-md 
+                     hover:bg-ui-blue-light/20 transition-colors duration-300 flex items-center 
+                     dark:bg-ui-blue-dark/10 dark:text-ui-blue-dark dark:hover:bg-ui-blue-dark/20"
+          aria-label="Back to Dashboard"
+        >
+          <LayoutDashboard className="inline-block mr-2" size={18} />
+          Back to Dashboard
+        </button>
+      </header>
+
+      {/* NEW: Search and Sort Controls */}
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+        {/* Search Input */}
+        <div className="relative w-full sm:w-1/2 md:w-1/3">
+          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary-light dark:text-text-secondary-dark" />
+          <input
+            type="text"
+            placeholder="Search files..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 rounded-lg bg-light-bg-card border border-border-subtle-light 
+                       text-text-primary-light focus:outline-none focus:ring-2 focus:ring-brand-orange-light 
+                       dark:bg-dark-bg-card dark:border-border-subtle-dark dark:text-text-primary-dark dark:focus:ring-brand-orange-dark"
+          />
+        </div>
+
+        {/* Sort Dropdown */}
+        <div className="relative w-full sm:w-1/2 md:w-1/4">
+          <ListFilter size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary-light dark:text-text-secondary-dark" />
+          <select
+            value={sortCriteria}
+            onChange={(e) => setSortCriteria(e.target.value)}
+            className="appearance-none w-full pl-10 pr-4 py-2 rounded-lg bg-light-bg-card border border-border-subtle-light 
+                       text-text-primary-light focus:outline-none focus:ring-2 focus:ring-brand-orange-light 
+                       dark:bg-dark-bg-card dark:border-border-subtle-dark dark:text-text-primary-dark dark:focus:ring-brand-orange-dark"
+          >
+            <option value="newest">Sort by: Newest</option>
+            <option value="oldest">Sort by: Oldest</option>
+            <option value="name-asc">Sort by: Name (A-Z)</option>
+            <option value="name-desc">Sort by: Name (Z-A)</option>
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-text-secondary-light dark:text-text-secondary-dark">
+            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l-.707.707L13.5 18l4.207-4.207-.707-.707L13.5 16.5l-4.207-4.207zM10.707 7.05l.707-.707L6.5 2 2.293 6.207l.707.707L6.5 3.5l4.207 4.207z"/></svg>
+          </div>
+        </div>
+      </div>
+
+      {/* NEW: Enhanced Empty State Message */}
+      {filteredAndSortedFiles.length === 0 ? (
+        <div className="text-center p-10 bg-light-bg-card bg-opacity-70 backdrop-blur-sm rounded-xl shadow-lg border border-white/30 dark:bg-dark-bg-card dark:bg-opacity-60 dark:border-gray-300/10">
+          <FileText size={64} className="mx-auto mb-4 text-text-secondary-light dark:text-text-secondary-dark opacity-50" />
+          <p className="text-text-primary-light text-xl font-semibold dark:text-text-primary-dark mb-2">No Invoices to Approve!</p>
+          <p className="text-text-secondary-light dark:text-text-secondary-dark">Looks like your incoming inbox is clear. Great job!</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 items-stretch">
+          {filteredAndSortedFiles.map((file) => (
+            <FileCard key={file.id} file={file} onEdit={onEdit} onApprove={onApprove} onView={onView} /> 
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default IncomingInvoicesPage;

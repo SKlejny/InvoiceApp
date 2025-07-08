@@ -1,47 +1,66 @@
+// src/pages/DashboardPage.js
 import React from 'react';
-import { LayoutDashboard, ListTodo, FileBarChart, LogIn } from 'lucide-react';
+import { LayoutDashboard, ListTodo, FileBarChart, CheckCircle, Send } from 'lucide-react';
+import { FOLDER_NAMES, FOLDER_DETAILS } from '../utils/constants';
 
-function DashboardPage({ userProfile, folders, setCurrentPage, onLogout }) {
+const FolderCard = ({ title, icon, count, onClick }) => (
+  <div
+    onClick={onClick}
+    className="bg-light-bg-card p-6 rounded-2xl shadow-lg hover:shadow-xl flex flex-col items-center justify-center 
+               cursor-pointer transition-transform transform hover:-translate-y-1 hover:scale-105 duration-300 
+               border border-border-subtle-light hover:border-brand-orange-light 
+               dark:bg-dark-bg-card dark:border-border-subtle-dark dark:hover:border-brand-orange-dark"
+    role="button"
+  >
+    <div className="mb-4">{icon}</div>
+    <h3 className="text-lg font-semibold text-text-primary-light text-center dark:text-text-primary-dark">{title}</h3>
+    <p className="text-sm text-text-secondary-light mt-2 dark:text-text-secondary-dark">{count} {count === 1 ? 'file' : 'files'}</p>
+  </div>
+);
+
+const DashboardPage = ({ userProfile, folders, setCurrentPage }) => {
+  const getFolderCount = (folderKey) => folders[folderKey]?.length ?? 0;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 p-8">
-      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-2xl p-8 border-t-4 border-teal-500">
-        <h2 className="text-3xl font-extrabold text-gray-800 mb-6 text-center flex items-center justify-center gap-3">
-          <LayoutDashboard className="w-8 h-8 text-teal-600" /> Dashboard
-        </h2>
+    <div className="max-w-5xl mx-auto">
+      <div className="text-center mb-10">
+        <LayoutDashboard className="w-12 h-12 text-brand-orange-light dark:text-brand-orange-dark mx-auto mb-4" />
+        <h1 className="text-4xl font-bold text-text-primary-light dark:text-text-primary-dark">Dashboard</h1>
         {userProfile && (
-          <p className="text-center text-gray-600 mb-8">
-            Welcome, <span className="font-semibold text-teal-700">{userProfile.name || userProfile.email}</span>!
+          <p className="text-text-secondary-light mt-2 text-lg dark:text-text-secondary-dark">
+            Welcome back, <span className="font-semibold text-ui-blue-light dark:text-ui-blue-dark">{userProfile.displayName}</span>
           </p>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <button
-            onClick={() => setCurrentPage('incomingInvoices')}
-            className="flex flex-col items-center justify-center p-6 bg-blue-100 text-blue-800 rounded-lg shadow-md hover:bg-blue-200 transition-colors duration-200 transform hover:scale-105"
-          >
-            <ListTodo className="w-12 h-12 mb-3" />
-            <span className="font-semibold text-lg">Current Invoices (To Approve)</span>
-            <span className="text-sm mt-1">{folders['Incoming Invoices'].length} files</span>
-          </button>
-          <button
-            onClick={() => setCurrentPage('publishedDocuments')}
-            className="flex flex-col items-center justify-center p-6 bg-purple-100 text-purple-800 rounded-lg shadow-md hover:bg-purple-200 transition-colors duration-200 transform hover:scale-105"
-          >
-            <FileBarChart className="w-12 h-12 mb-3" />
-            <span className="font-semibold text-lg">Published Documents (Viewable)</span>
-            <span className="text-sm mt-1">{folders['Published Documents'].length} files</span>
-          </button>
-        </div>
-        <div className="mt-10 text-center">
-          <button
-            onClick={onLogout} // Call the onLogout prop passed from App.js
-            className="text-red-500 hover:text-red-700 font-semibold flex items-center mx-auto transition-colors"
-          >
-            <LogIn className="w-5 h-5 rotate-180 mr-2" /> Logout
-          </button>
-        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <FolderCard
+          title="To be Approved"
+          icon={<ListTodo size={40} className="text-status-attention-light dark:text-status-attention-dark" />}
+          count={getFolderCount(FOLDER_NAMES.INCOMING_INVOICES)}
+          onClick={() => setCurrentPage(FOLDER_DETAILS.incomingInvoices.path)}
+        />
+        <FolderCard
+          title="Approved Invoices"
+          icon={<CheckCircle size={40} className="text-status-approved-light dark:text-status-approved-dark" />}
+          count={getFolderCount(FOLDER_NAMES.APPROVED_INVOICES)}
+          onClick={() => setCurrentPage(FOLDER_DETAILS.approvedInvoices.path)}
+        />
+        <FolderCard
+          title="Raised in QuickBooks"
+          icon={<FileBarChart size={40} className="text-status-raised-light dark:text-status-raised-dark" />}
+          count={getFolderCount(FOLDER_NAMES.PUBLISHED_DOCUMENTS)}
+          onClick={() => setCurrentPage(FOLDER_DETAILS.publishedDocuments.path)}
+        />
+        <FolderCard
+          title="Sent Invoices"
+          icon={<Send size={40} className="text-status-pending-light dark:text-status-pending-dark" />}
+          count={getFolderCount(FOLDER_NAMES.SENT_DOCUMENTS)}
+          onClick={() => setCurrentPage(FOLDER_DETAILS.sentDocuments.path)}
+        />
       </div>
     </div>
   );
-}
+};
 
 export default DashboardPage;

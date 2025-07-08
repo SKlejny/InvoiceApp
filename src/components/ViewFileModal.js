@@ -1,32 +1,60 @@
+// src/components/ViewFileModal.js
 import React from 'react';
 import { X } from 'lucide-react';
 
-function ViewFileModal({ isOpen, onClose, fileName, fileContent }) {
-  if (!isOpen) return null;
+const ViewFileModal = ({ isOpen, onClose, file, content }) => {
+  if (!isOpen || !file) return null;
+
+  const renderContent = () => {
+    if (!content) {
+      return <p className="text-text-secondary-dark">No content to display.</p>;
+    }
+
+    // Use an iframe for PDF files
+    if (file.type === 'pdf') {
+      return (
+        <iframe
+          src={content}
+          title={file.name}
+          className="w-full h-full border-none"
+          aria-label={`PDF viewer for ${file.name}`}
+        />
+      );
+    }
+    
+    // For any other file type, display a message as they aren't supported for viewing
+    return (
+        <div className="text-center p-4">
+            <p className="font-semibold text-text-primary-dark">Preview not available.</p>
+            <p className="text-text-secondary-dark mt-1">This file type ({file.type}) cannot be viewed directly in the app.</p>
+        </div>
+    );
+  };
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold text-gray-800">Viewing: {fileName}</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-        <div className="bg-gray-100 p-4 rounded-md max-h-96 overflow-y-auto mb-6">
-          <p className="whitespace-pre-wrap text-gray-800 text-sm">{fileContent}</p>
-        </div>
-        <div className="flex justify-end">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+      <div className="bg-dark-bg-card rounded-xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col p-4 sm:p-6">
+        {/* Modal Header */}
+        <div className="flex justify-between items-center mb-4 flex-shrink-0">
+          <h2 className="text-xl font-bold text-text-primary-dark truncate pr-4">
+            Viewing: {file.name}
+          </h2>
           <button
             onClick={onClose}
-            className="bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors shadow-md"
+            className="p-2 rounded-full text-text-secondary-dark hover:bg-white/10 hover:text-text-primary-dark transition-colors"
+            aria-label="Close modal"
           >
-            Close
+            <X size={24} />
           </button>
+        </div>
+        
+        {/* Modal Content */}
+        <div className="flex-grow bg-black/30 rounded-lg overflow-hidden flex items-center justify-center">
+            {renderContent()}
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default ViewFileModal;
