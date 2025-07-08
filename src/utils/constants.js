@@ -8,7 +8,7 @@ export const SHAREPOINT_DRIVE_ID = process.env.REACT_APP_SHAREPOINT_DID;
 const INCOMING_INVOICES_FOLDER_ITEM_ID = process.env.REACT_APP_INCOMING_ID;
 const APPROVED_INVOICES_FOLDER_ITEM_ID = process.env.REACT_APP_APPROVED_ID;
 const PUBLISHED_DOCUMENTS_FOLDER_ITEM_ID = process.env.REACT_APP_PUBLISHED_ID;
-const SENT_FOLDER_ITEM_ID = process.env.REACT_APP_SENT_ID;
+const SENT_FOLDER_ITEM_ID = process.env.REACT_APP_SENT_git aID;
 
 // Internal keys used throughout the app to reference the folders
 export const FOLDER_NAMES = {
