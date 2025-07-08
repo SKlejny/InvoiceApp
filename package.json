@@ -2,6 +2,7 @@
   "name": "invoice-system-app",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://sklejny.github.io/InvoiceApp/",
   "dependencies": {
     "@azure/msal-browser": "^4.13.2",
     "@azure/msal-react": "^3.0.13",
